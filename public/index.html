@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>LinkVault — Premium URL Shortener</title>
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e1a;--bg2:#0f1526;--bg3:#151d35;
+  --card:rgba(255,255,255,0.03);--card2:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#eef2ff;--text2:#7b8ab8;--text3:#3d4f7c;
+  --p:#6c63ff;--p2:#a855f7;--cyan:#22d3ee;
+  --green:#34d399;--red:#f87171;--yellow:#fbbf24;
+  --grad:linear-gradient(135deg,#6c63ff,#a855f7);
+  --glow:0 0 32px rgba(108,99,255,.35);--r:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* OVERLAY */
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:199;backdrop-filter:blur(4px)}
+.sb-overlay.show{display:block}
+
+/* SIDEBAR */
+.sidebar{width:240px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:200;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}}
+.sb-logo{padding:18px 16px 14px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border)}
+.sb-logo-icon{width:36px;height:36px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:var(--glow);flex-shrink:0}
+.sb-logo-text{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.sb-logo-text span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sb-close{margin-left:auto;cursor:pointer;color:var(--text2);font-size:22px;display:none;padding:2px;line-height:1}
+@media(max-width:768px){.sb-close{display:block}}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.sb-section{padding:12px 16px 4px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:700}
+.sb-item{display:flex;align-items:center;gap:11px;padding:11px 16px;cursor:pointer;color:var(--text2);font-size:13.5px;font-weight:500;transition:all .18s;position:relative}
+.sb-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.sb-item.active{color:var(--p);background:rgba(108,99,255,.1)}
+.sb-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--grad);border-radius:0 3px 3px 0}
+.si{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--card2);flex-shrink:0;transition:all .18s}
+.sb-item.active .si{background:rgba(108,99,255,.2)}
+.sb-foot{padding:12px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--card2);border-radius:11px;cursor:pointer;transition:all .18s}
+.sb-user:hover{background:rgba(255,255,255,.08)}
+.sb-av{width:32px;height:32px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.sb-uname{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-uplan{font-size:11px;color:var(--text3)}
+.sb-logout{margin-left:auto;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0;transition:color .2s}
+.sb-logout:hover{color:var(--red)}
+
+/* MAIN */
+.main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
+@media(max-width:768px){.main{margin-left:0}}
+
+/* TOPBAR */
+.topbar{height:56px;display:flex;align-items:center;gap:12px;padding:0 18px;background:rgba(10,14,26,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.tb-menu{display:none;cursor:pointer;color:var(--text2);font-size:24px;padding:2px;line-height:1}
+@media(max-width:768px){.tb-menu{display:block}}
+.tb-title{font-size:15px;font-weight:700;flex:1;letter-spacing:-.2px}
+.tb-actions{display:flex;align-items:center;gap:8px}
+
+/* CONTENT */
+.content{padding:18px;flex:1}
+@media(max-width:480px){.content{padding:12px}}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(108,99,255,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(108,99,255,.4)}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border2)}
+.btn-secondary:hover{background:rgba(255,255,255,.1)}
+.btn-danger{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+.btn-danger:hover{background:rgba(248,113,113,.2)}
+.btn-sm{padding:7px 12px;font-size:12px;border-radius:8px}
+.btn-icon{padding:7px;border-radius:8px;min-width:32px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+@media(min-width:900px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;transition:all .25s;cursor:default}
+.stat-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.stat-card::after{content:'';position:absolute;top:-20px;right:-20px;width:70px;height:70px;border-radius:50%;opacity:.1}
+.stat-card.s1::after{background:var(--p)}.stat-card.s2::after{background:var(--p2)}.stat-card.s3::after{background:var(--green)}.stat-card.s4::after{background:var(--cyan)}
+.stat-ico{font-size:18px;margin-bottom:8px}
+.stat-val{font-size:24px;font-weight:800;line-height:1;margin-bottom:3px;letter-spacing:-.5px}
+.stat-lbl{font-size:11.5px;color:var(--text2);font-weight:500}
+
+/* INPUTS */
+.ig{margin-bottom:13px}
+.il{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.inp{width:100%;background:var(--bg3);border:1.5px solid var(--border2);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13.5px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:all .18s}
+.inp:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.inp::placeholder{color:var(--text3)}
+textarea.inp{resize:vertical;min-height:72px}
+
+/* TABLE */
+.tw{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;min-width:480px}
+thead th{background:var(--bg3);padding:10px 13px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+td{padding:12px 13px;font-size:13px;color:var(--text2);vertical-align:middle}
+td strong{color:var(--text);font-weight:600}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.bg-green{background:rgba(52,211,153,.13);color:var(--green)}.bg-red{background:rgba(248,113,113,.13);color:var(--red)}.bg-blue{background:rgba(108,99,255,.13);color:#a5b4fc}.bg-yellow{background:rgba(251,191,36,.13);color:var(--yellow)}.bg-cyan{background:rgba(34,211,238,.13);color:var(--cyan)}
+
+/* TOGGLE */
+.tgl{width:42px;height:23px;background:var(--bg3);border-radius:12px;cursor:pointer;position:relative;border:1.5px solid var(--border2);transition:all .2s;flex-shrink:0}
+.tgl.on{background:var(--p);border-color:var(--p)}
+.tgl::after{content:'';position:absolute;width:17px;height:17px;background:#fff;border-radius:50%;top:1px;left:1px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.tgl.on::after{left:21px}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.moverlay{align-items:center;padding:20px}}
+.moverlay.show{display:flex;animation:fIn .2s ease}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:22px 18px 26px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;animation:slideUp .25s ease}
+@media(min-width:600px){.modal{border-radius:18px;animation:scIn .22s ease}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mt{font-size:16px;font-weight:800}.mx{cursor:pointer;color:var(--text2);font-size:22px;line-height:1;padding:2px}.mx:hover{color:var(--text)}
+@keyframes fIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes scIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* TOAST */
+#toasts{position:fixed;top:14px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+@media(max-width:480px){#toasts{left:14px;right:14px}}
+.toast{padding:10px 15px;border-radius:11px;font-size:13px;font-weight:600;backdrop-filter:blur(20px);border:1px solid;animation:tIn .25s ease;pointer-events:auto}
+.t-success{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.3);color:#6ee7b7}
+.t-error{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3);color:#fca5a5}
+.t-info{background:rgba(108,99,255,.15);border-color:rgba(108,99,255,.3);color:#a5b4fc}
+@keyframes tIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:480px){@keyframes tIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}}
+
+/* SKELETON */
+.sk{background:linear-gradient(90deg,var(--bg3) 25%,rgba(255,255,255,.06) 50%,var(--bg3) 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:8px}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:18px}
+@media(min-width:700px){.charts-grid{grid-template-columns:3fr 2fr}}
+.cc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.cc-title{font-size:13.5px;font-weight:700;margin-bottom:14px;color:var(--text)}
+
+/* DROP ZONE */
+.dz{border:2px dashed var(--border2);border-radius:var(--r);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.dz:hover,.dz.drag{border-color:var(--p);background:rgba(108,99,255,.05)}
+.pb{height:5px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-top:8px}
+.pf{height:100%;background:var(--grad);border-radius:5px;transition:width .3s;width:0%}
+
+/* LANDING */
+#landing-view{min-height:100vh;display:flex;flex-direction:column}
+.lnav{padding:13px 18px;display:flex;align-items:center;gap:10px;background:rgba(10,14,26,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.lnav-logo{font-size:17px;font-weight:800;flex:1}
+.lnav-logo span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px 18px 40px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 10%,rgba(108,99,255,.17) 0%,transparent 65%),radial-gradient(ellipse at 80% 80%,rgba(168,85,247,.1) 0%,transparent 50%);pointer-events:none}
+.hero h1{font-size:clamp(28px,7vw,60px);font-weight:800;line-height:1.1;margin-bottom:14px;position:relative;letter-spacing:-1px}
+.hero h1 span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:clamp(13px,2.5vw,16px);color:var(--text2);margin-bottom:28px;max-width:500px;line-height:1.7;position:relative}
+.hform{display:flex;gap:8px;max-width:540px;width:100%;position:relative;flex-direction:column}
+@media(min-width:480px){.hform{flex-direction:row}}
+.hinp{flex:1;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);border-radius:12px;padding:12px 15px;color:var(--text);font-size:14px;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:all .2s}
+.hinp:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.hinp::placeholder{color:var(--text3)}
+.hbtn{padding:12px 22px;background:var(--grad);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:var(--glow);transition:all .2s;white-space:nowrap}
+.hbtn:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(108,99,255,.4)}
+.res-card{margin-top:14px;padding:16px 18px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;display:none;max-width:540px;width:100%;animation:scIn .3s ease}
+.res-url{font-size:17px;font-weight:800;color:var(--p);word-break:break-all;margin-bottom:10px}
+.res-actions{display:flex;gap:7px;flex-wrap:wrap}
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:40px;max-width:860px;width:100%;position:relative}
+@media(min-width:600px){.feat-grid{grid-template-columns:repeat(4,1fr)}}
+.feat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:all .25s;text-align:left}
+.feat:hover{border-color:var(--border2);transform:translateY(-3px)}
+.feat-ico{font-size:22px;margin-bottom:8px}
+.feat-t{font-size:13px;font-weight:700;margin-bottom:4px}
+.feat-d{font-size:11.5px;color:var(--text2);line-height:1.5}
+
+/* AUTH */
+#auth-view{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{width:100%;max-width:390px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px 22px}
+.auth-card h2{font-size:21px;font-weight:800;text-align:center;margin-bottom:3px}
+.auth-sub{color:var(--text2);font-size:12.5px;text-align:center;margin-bottom:22px}
+
+/* SETTINGS ROW */
+.sr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}
+.sr:last-child{border-bottom:none}
+.sr-lbl{font-size:13px;font-weight:600}
+.sr-desc{font-size:11.5px;color:var(--text3);margin-top:2px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::selection{background:rgba(108,99,255,.3)}
+</style>
+</head>
+<body>
+<div id="toasts"></div>
+
+<!-- LANDING -->
+<div id="landing-view" style="display:none">
+  <nav class="lnav">
+    <div class="lnav-logo">Link<span>Vault</span></div>
+    <button class="btn btn-secondary btn-sm" onclick="showAuth('login')">Sign In</button>
+    <button class="btn btn-primary btn-sm" onclick="showAuth('register')">Get Started</button>
+  </nav>
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <h1>Shorten. Share.<br><span>Monetize.</span></h1>
+    <p>Premium URL shortener with multi-layer ad monetization, analytics, and file sharing.</p>
+    <div class="hform">
+      <input class="hinp" id="hero-url" type="url" placeholder="Paste your long URL here...">
+      <button class="hbtn" onclick="quickShorten()">✦ Shorten</button>
+    </div>
+    <div class="res-card" id="res-card">
+      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Your Short Link</div>
+      <div class="res-url" id="res-url"></div>
+      <div class="res-actions">
+        <button class="btn btn-secondary btn-sm" id="copy-btn" onclick="copyResUrl()">📋 Copy</button>
+        <button class="btn btn-secondary btn-sm" onclick="showQRFor(document.getElementById('res-card').dataset.url)">⬛ QR</button>
+        <button class="btn btn-primary btn-sm" onclick="showAuth('register')">📊 Analytics</button>
+      </div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat"><div class="feat-ico">⚡</div><div class="feat-t">5-Layer Ads</div><div class="feat-d">Earn from every click with Adsterra + Monetag</div></div>
+      <div class="feat"><div class="feat-ico">📊</div><div class="feat-t">Analytics</div><div class="feat-d">Track clicks, countries, devices live</div></div>
+      <div class="feat"><div class="feat-ico">📁</div><div class="feat-t">File Sharing</div><div class="feat-d">Upload APKs, PDFs, ZIPs</div></div>
+      <div class="feat"><div class="feat-ico">🔐</div><div class="feat-t">Secure</div><div class="feat-d">Rate limiting & bot protection</div></div>
+    </div>
+  </section>
+</div>
+
+<!-- AUTH -->
+<div id="auth-view" style="display:none">
+  <div class="auth-card">
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="display:inline-flex;width:44px;height:44px;background:var(--grad);border-radius:12px;align-items:center;justify-content:center;font-size:19px;box-shadow:var(--glow)">🔗</div>
+    </div>
+    <h2 id="auth-h">Welcome back</h2>
+    <div class="auth-sub" id="auth-s">Sign in to your LinkVault account</div>
+    <div id="reg-fields" style="display:none">
+      <div class="ig"><label class="il">Username</label><input class="inp" id="reg-user" placeholder="cooluser"></div>
+    </div>
+    <div class="ig"><label class="il">Email</label><input class="inp" id="a-email" type="email" placeholder="you@example.com"></div>
+    <div class="ig"><label class="il">Password</label><input class="inp" id="a-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <button class="btn btn-primary" style="width:100%;padding:12px" id="auth-btn" onclick="submitAuth()">Sign In</button>
+    <p style="text-align:center;margin-top:13px;font-size:12.5px;color:var(--text2)">
+      <span id="auth-sw-t">Don't have an account?</span>
+      <a href="#" id="auth-sw-l" onclick="toggleAuth(event)" style="color:var(--p);font-weight:700;text-decoration:none"> Sign up</a>
+    </p>
+    <p style="text-align:center;margin-top:9px"><a href="#" onclick="showLanding(event)" style="color:var(--text3);font-size:11.5px;text-decoration:none">← Back to home</a></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-view" style="display:none">
+  <div class="sb-overlay" id="sb-overlay" onclick="closeSB()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🔗</div>
+      <div class="sb-logo-text">Link<span>Vault</span></div>
+      <span class="sb-close" onclick="closeSB()">✕</span>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="navTo('dashboard',this)"><div class="si">📊</div>Dashboard</div>
+      <div class="sb-item" onclick="navTo('links',this)"><div class="si">🔗</div>My Links</div>
+      <div class="sb-item" onclick="navTo('files',this)"><div class="si">📁</div>Files</div>
+      <div class="sb-item" onclick="navTo('analytics',this)"><div class="si">📈</div>Analytics</div>
+      <div id="adm-sec" style="display:none"><div class="sb-section">Admin</div></div>
+      <div class="sb-item" id="adm-nav" style="display:none" onclick="navTo('admin',this)"><div class="si">👑</div>Admin Panel</div>
+      <div class="sb-section">Account</div>
+      <div class="sb-item" onclick="navTo('settings',this)"><div class="si">⚙️</div>Settings</div>
+      <div class="sb-item" onclick="navTo('api',this)"><div class="si">🔑</div>API Access</div>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-av" id="sb-av">U</div>
+        <div style="flex:1;min-width:0">
+          <div class="sb-uname" id="sb-nm">User</div>
+          <div class="sb-uplan" id="sb-pl">Free Plan</div>
+        </div>
+        <span class="sb-logout" onclick="logout()" title="Logout">↪</span>
+      </div>
+    </div>
+  </div>
+  <main class="main">
+    <div class="topbar">
+      <span class="tb-menu" onclick="openSB()">☰</span>
+      <div class="tb-title" id="tb-title">Dashboard</div>
+      <div class="tb-actions">
+        <button class="btn btn-primary btn-sm" onclick="openModal('ml-modal')">+ New Link</button>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<!-- NEW LINK MODAL -->
+<div class="moverlay" id="ml-modal">
+  <div class="modal">
+    <div class="mh"><div class="mt">✦ Create Short Link</div><span class="mx" onclick="closeModal('ml-modal')">✕</span></div>
+    <div class="ig"><label class="il">Destination URL *</label><input class="inp" id="nl-url" type="url" placeholder="https://example.com/long-url"></div>
+    <div class="ig"><label class="il">Custom Alias (optional)</label><input class="inp" id="nl-alias" placeholder="my-link" maxlength="30"></div>
+    <div class="ig"><label class="il">Title (optional)</label><input class="inp" id="nl-title" placeholder="Campaign link"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="ig"><label class="il">Expiry Date</label><input class="inp" id="nl-exp" type="datetime-local"></div>
+      <div class="ig"><label class="il">Max Clicks</label><input class="inp" id="nl-max" type="number" placeholder="Unlimited"></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:12px" onclick="createLink()">Create Link ✦</button>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="moverlay" id="qr-modal">
+  <div class="modal" style="max-width:300px;text-align:center">
+    <div class="mh"><div class="mt">QR Code</div><span class="mx" onclick="closeModal('qr-modal')">✕</span></div>
+    <div id="qr-wrap" style="display:flex;justify-content:center;background:#fff;border-radius:12px;padding:12px"></div>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px;word-break:break-all" id="qr-txt"></p>
+    <button class="btn btn-secondary btn-sm" style="margin-top:11px" onclick="dlQR()">⬇ Download</button>
+  </div>
+</div>
+
+<!-- ANALYTICS MODAL -->
+<div class="moverlay" id="an-modal">
+  <div class="modal" style="max-width:620px">
+    <div class="mh"><div class="mt">📊 Analytics</div><span class="mx" onclick="closeModal('an-modal')">✕</span></div>
+    <div id="an-content"></div>
+  </div>
+</div>
+
+<script>
+let U=null,charts={},curPage='dashboard';
+
+// ── INIT with localStorage cache ──
+async function init(){
+  // Show cached user instantly (no flash)
+  const cached = localStorage.getItem('lv_user');
+  if(cached){
+    try{
+      U=JSON.parse(cached);
+      showApp();
+    }catch{}
+  }
+
+  // Then verify with server in background
+  try{
+    const r=await api('/api/auth/me');
+    if(r&&!r.error){
+      U=r;
+      localStorage.setItem('lv_user', JSON.stringify(r));
+      if(!cached) showApp(); // first load
+      else updateUserUI(); // update sidebar info silently
+    }else{
+      // Session gone
+      localStorage.removeItem('lv_user');
+      U=null;
+      showLanding();
+    }
+  }catch{
+    // Network error — keep cached user, don't logout
+    if(!cached) showLanding();
+  }
+}
+
+function updateUserUI(){
+  if(!U) return;
+  document.getElementById('sb-av').textContent=U.username[0].toUpperCase();
+  document.getElementById('sb-nm').textContent=U.username;
+  document.getElementById('sb-pl').textContent=cap(U.plan||'free')+' Plan';
+  if(U.role==='admin'){
+    document.getElementById('adm-sec').style.display='block';
+    document.getElementById('adm-nav').style.display='flex';
+  }
+}
+
+// VIEWS
+function showLanding(e){if(e)e.preventDefault();v('landing-view');h('auth-view');h('app-view');}
+function showAuth(mode){authMode=mode;h('landing-view');v('auth-view');h('app-view');updAuth();}
+function showApp(){
+  h('landing-view');h('auth-view');v('app-view');
+  updateUserUI();
+  navTo('dashboard',document.querySelector('.sb-item'));
+}
+function v(id){document.getElementById(id).style.display='block'}
+function h(id){document.getElementById(id).style.display='none'}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+// SIDEBAR
+function openSB(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-overlay').classList.add('show');document.body.style.overflow='hidden';}
+function closeSB(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('show');document.body.style.overflow='';}
+
+// NAV
+function navTo(page,el){
+  curPage=page;closeSB();
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const titles={dashboard:'Dashboard',links:'My Links',files:'Files',analytics:'Analytics',admin:'Admin Panel',settings:'Settings',api:'API Access'};
+  document.getElementById('tb-title').textContent=titles[page]||page;
+  const pages={dashboard:renderDashboard,links:renderLinks,files:renderFiles,analytics:renderAnalytics,admin:renderAdmin,settings:renderSettings,api:renderAPI};
+  if(pages[page])pages[page]();
+}
+
+// AUTH
+let authMode='login';
+function updAuth(){
+  const L=authMode==='login';
+  document.getElementById('auth-h').textContent=L?'Welcome back':'Create account';
+  document.getElementById('auth-s').textContent=L?'Sign in to your account':'Start earning today';
+  document.getElementById('auth-btn').textContent=L?'Sign In':'Create Account';
+  document.getElementById('reg-fields').style.display=L?'none':'block';
+  document.getElementById('auth-sw-t').textContent=L?"Don't have an account?":'Already have one?';
+  document.getElementById('auth-sw-l').textContent=L?' Sign up':' Sign in';
+}
+function toggleAuth(e){e.preventDefault();authMode=authMode==='login'?'register':'login';updAuth();}
+async function submitAuth(){
+  const email=document.getElementById('a-email').value,pass=document.getElementById('a-pass').value;
+  if(!email||!pass){toast('Fill all fields','error');return;}
+  const btn=document.getElementById('auth-btn');btn.textContent='...';btn.disabled=true;
+  try{
+    let data;
+    if(authMode==='register'){
+      const u=document.getElementById('reg-user').value;
+      if(!u){toast('Username required','error');return;}
+      data=await api('/api/auth/register','POST',{username:u,email,password:pass});
+    }else{data=await api('/api/auth/login','POST',{email,password:pass});}
+    if(data.error){toast(data.error,'error');return;}
+    U=data.user;
+    localStorage.setItem('lv_user', JSON.stringify(data.user));
+    toast('Welcome! 🎉','success');showApp();
+  }catch{toast('Something went wrong','error');}
+  finally{btn.disabled=false;updAuth();}
+}
+async function logout(){
+  await api('/api/auth/logout','POST');
+  U=null;
+  localStorage.removeItem('lv_user');
+  showLanding();
+  toast('Signed out','info');
+}
+
+// DASHBOARD
+async function renderDashboard(){
+  const c=document.getElementById('content');
+  c.innerHTML=`
+  <div class="stats-grid">
+    <div class="stat-card s1"><div class="stat-ico">🔗</div><div class="stat-val sk" style="width:60px;height:26px" id="sv1"></div><div class="stat-lbl">Total Links</div></div>
+    <div class="stat-card s2"><div class="stat-ico">👆</div><div class="stat-val sk" style="width:60px;height:26px" id="sv2"></div><div class="stat-lbl">Total Clicks</div></div>
+    <div class="stat-card s3"><div class="stat-ico">💵</div><div class="stat-val sk" style="width:60px;height:26px" id="sv3"></div><div class="stat-lbl">Earnings</div></div>
+    <div class="stat-card s4"><div class="stat-ico">📁</div><div class="stat-val sk" style="width:60px;height:26px" id="sv4"></div><div class="stat-lbl">Files</div></div>
+  </div>
+  <div class="charts-grid">
+    <div class="cc"><div class="cc-title">Clicks — Last 30 Days</div><canvas id="ch1" style="max-height:180px"></canvas></div>
+    <div class="cc"><div class="cc-title">By Country</div><canvas id="ch2" style="max-height:180px"></canvas></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700">Recent Links</div>
+      <button class="btn btn-secondary btn-sm" onclick="navTo('links',null)">View All</button>
+    </div>
+    <div id="rec-lnk"></div>
+  </div>`;
+  try{
+    const[lk,an]=await Promise.all([api('/api/links?limit=5'),api('/api/analytics/overview')]);
+    sv('sv1',lk.total||0);sv('sv2',an.totalClicks||0);sv('sv3','$'+((U?.earnings||0).toFixed(2)));sv('sv4',0);
+    const s=(an.dailyClicks||[]).slice().reverse();
+    mkLine('ch1',s.map(d=>d._id),s.map(d=>d.count));
+    mkPie('ch2',(an.countries||[]).map(c=>c._id||'?'),(an.countries||[]).map(c=>c.count));
+    document.getElementById('rec-lnk').innerHTML=lnkTbl(lk.links||[]);
+  }catch(e){console.error(e);}
+}
+function sv(id,val){const el=document.getElementById(id);if(el){el.className='stat-val';el.textContent=val;el.style.width='';el.style.height='';}}
+
+// LINKS
+async function renderLinks(){
+  document.getElementById('content').innerHTML=`
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+      <input class="inp" id="lsch" placeholder="🔍 Search..." style="flex:1;min-width:160px;max-width:260px" oninput="srchL(this.value)">
+      <button class="btn btn-primary" onclick="openModal('ml-modal')">+ New Link</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="tw" id="lt"></div>
+    <div id="lpg" style="display:flex;justify-content:center;gap:6px;margin-top:12px;flex-wrap:wrap"></div>
+  </div>`;
+  await loadLinks();
+}
+let lPg=1;
+async function loadLinks(p=1,s=''){
+  lPg=p;
+  const d=await api(`/api/links?page=${p}&limit=15&search=${encodeURIComponent(s)}`);
+  document.getElementById('lt').innerHTML=lnkTbl(d.links||[]);
+  let pg='';for(let i=1;i<=(d.pages||1);i++)pg+=`<button class="btn ${i===p?'btn-primary':'btn-secondary'} btn-sm" onclick="loadLinks(${i},'${s}')">${i}</button>`;
+  document.getElementById('lpg').innerHTML=pg;
+}
+function srchL(q){clearTimeout(window._st);window._st=setTimeout(()=>loadLinks(1,q),380);}
+function lnkTbl(links){
+  if(!links.length)return'<p style="text-align:center;padding:32px;color:var(--text3);font-size:13px">No links yet 🔗</p>';
+  return`<table><thead><tr><th>Link</th><th>Clicks</th><th>Earned</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+  ${links.map(l=>{const u=`${location.origin}/${l.shortCode}`;return`<tr>
+    <td><strong>${(l.title||l.originalUrl).substring(0,32)}${(l.title||l.originalUrl).length>32?'…':''}</strong><br><a href="${u}" target="_blank" style="color:var(--p);font-size:11px">${u}</a></td>
+    <td><span class="badge bg-blue">👆${l.clicks||0}</span></td>
+    <td style="color:var(--green);font-size:12px">$${(l.earnings||0).toFixed(4)}</td>
+    <td><span class="badge ${l.isActive?'bg-green':'bg-red'}">${l.isActive?'Active':'Off'}</span></td>
+    <td style="white-space:nowrap;display:flex;gap:4px">
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="cpClip('${u}')" title="Copy">📋</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="showQRFor('${u}')" title="QR">⬛</button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="showAn('${l._id}')" title="Stats">📊</button>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="delLink('${l._id}')" title="Delete">🗑</button>
+    </td>
+  </tr>`}).join('')}
+  </tbody></table>`;
+}
+async function createLink(){
+  const url=document.getElementById('nl-url').value;if(!url){toast('URL required','error');return;}
+  const d=await api('/api/links','POST',{originalUrl:url,alias:document.getElementById('nl-alias').value||undefined,title:document.getElementById('nl-title').value||undefined,expiresAt:document.getElementById('nl-exp').value||undefined,maxClicks:document.getElementById('nl-max').value||undefined});
+  if(d.error){toast(d.error,'error');return;}
+  toast('Created! 🎉','success');closeModal('ml-modal');
+  ['nl-url','nl-alias','nl-title','nl-exp','nl-max'].forEach(i=>document.getElementById(i).value='');
+  if(curPage==='links')await loadLinks();if(curPage==='dashboard')await renderDashboard();
+}
+async function delLink(id){if(!confirm('Delete?'))return;await api(`/api/links/${id}`,'DELETE');toast('Deleted','info');await loadLinks();}
+async function showAn(id){
+  document.getElementById('an-content').innerHTML='<p style="text-align:center;padding:28px;color:var(--text2)">Loading...</p>';
+  openModal('an-modal');
+  const d=await api(`/api/links/${id}/analytics`);
+  const s=(d.clicks||[]).slice().reverse();
+  document.getElementById('an-content').innerHTML=`
+  <div class="cc" style="margin-bottom:12px"><canvas id="an-ch" style="max-height:150px"></canvas></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="card"><div style="font-weight:700;margin-bottom:9px;font-size:13px">Countries</div>${(d.countries||[]).map(c=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><span>${c._id||'?'}</span><span class="badge bg-blue">${c.count}</span></div>`).join('')||'<p style="color:var(--text3);font-size:12px">No data</p>'}</div>
+    <div class="card"><div style="font-weight:700;margin-bottom:9px;font-size:13px">Devices</div>${(d.devices||[]).map(dv=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px"><span>${dv._id||'?'}</span><span class="badge bg-cyan">${dv.count}</span></div>`).join('')||'<p style="color:var(--text3);font-size:12px">No data</p>'}</div>
+  </div>`;
+  setTimeout(()=>mkLine('an-ch',s.map(d=>d._id),s.map(d=>d.count)),80);
+}
+
+// FILES
+async function renderFiles(){
+  document.getElementById('content').innerHTML=`
+  <div class="card" style="margin-bottom:14px">
+    <div class="dz" id="dz" onclick="document.getElementById('fi').click()">
+      <div style="font-size:32px;margin-bottom:8px">📤</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:5px">Drop files here</div>
+      <div style="color:var(--text2);font-size:12.5px">PDF, ZIP, APK, Images — max 100MB</div>
+      <input type="file" id="fi" style="display:none" onchange="doUp(this)">
+    </div>
+    <div id="up-p" style="display:none;margin-top:11px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span id="up-n"></span><span id="up-pc">0%</span></div>
+      <div class="pb"><div class="pf" id="pf"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:13px">Uploaded Files</div>
+    <div id="fg" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px"></div>
+  </div>`;
+  setupDZ();await loadFiles();
+}
+function setupDZ(){const dz=document.getElementById('dz');if(!dz)return;dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])uploadFile(e.dataTransfer.files[0]);});}
+function doUp(input){if(input.files[0])uploadFile(input.files[0]);}
+async function uploadFile(file){
+  const prog=document.getElementById('up-p'),pf=document.getElementById('pf'),pct=document.getElementById('up-pc'),fn=document.getElementById('up-n');
+  prog.style.display='block';fn.textContent=file.name;
+  return new Promise(res=>{
+    const xhr=new XMLHttpRequest();
+    xhr.upload.onprogress=e=>{const p=Math.round(e.loaded/e.total*100);pf.style.width=p+'%';pct.textContent=p+'%';};
+    xhr.onload=async()=>{const d=JSON.parse(xhr.responseText);if(d.error)toast(d.error,'error');else{toast('Uploaded! 📁','success');await loadFiles();}prog.style.display='none';pf.style.width='0%';res(d);};
+    xhr.open('POST','/api/files/upload');const fd=new FormData();fd.append('file',file);xhr.send(fd);
+  });
+}
+async function loadFiles(){
+  const d=await api('/api/files');const g=document.getElementById('fg');if(!g)return;
+  if(!d.files?.length){g.innerHTML='<p style="color:var(--text3);font-size:13px;grid-column:1/-1;text-align:center;padding:32px">No files yet</p>';return;}
+  g.innerHTML=d.files.map(f=>{
+    const ico=f.mimetype?.includes('pdf')?'📄':f.mimetype?.includes('image')?'🖼':f.originalName?.endsWith('.apk')?'📱':f.originalName?.endsWith('.zip')?'🗜':'📁';
+    const sz=f.size<1048576?`${(f.size/1024).toFixed(1)}KB`:`${(f.size/1048576).toFixed(1)}MB`;
+    return`<div class="card" style="padding:13px;text-align:center">
+      <div style="font-size:28px;margin-bottom:7px">${ico}</div>
+      <div style="font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px" title="${f.originalName}">${f.originalName}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:9px">${sz}</div>
+      <button class="btn btn-danger btn-sm" style="width:100%" onclick="delFile('${f._id}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+async function delFile(id){if(!confirm('Delete?'))return;await api(`/api/files/${id}`,'DELETE');toast('Deleted','info');await loadFiles();}
+
+// ANALYTICS
+async function renderAnalytics(){
+  document.getElementById('content').innerHTML=`
+  <div class="charts-grid" style="margin-bottom:14px">
+    <div class="cc"><div class="cc-title">Clicks Over Time</div><canvas id="anc1" style="max-height:200px"></canvas></div>
+    <div class="cc"><div class="cc-title">Devices</div><canvas id="anc2" style="max-height:200px"></canvas></div>
+  </div>
+  <div class="card"><div class="cc-title">Top Countries</div><div class="tw" style="margin-top:10px" id="an-ct"></div></div>`;
+  const d=await api('/api/analytics/overview');
+  const s=(d.dailyClicks||[]).slice().reverse();
+  mkLine('anc1',s.map(x=>x._id),s.map(x=>x.count));
+  mkPie('anc2',(d.devices||[]).map(x=>x._id||'?'),(d.devices||[]).map(x=>x.count));
+  const tot=(d.countries||[]).reduce((a,b)=>a+b.count,0);
+  document.getElementById('an-ct').innerHTML=`<table><thead><tr><th>Country</th><th>Clicks</th><th>Share</th></tr></thead><tbody>
+  ${(d.countries||[]).map(c=>{const p=tot?Math.round(c.count/tot*100):0;return`<tr><td>${c._id||'Unknown'}</td><td>${c.count}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="width:${p}%;height:100%;background:var(--grad)"></div></div><span style="font-size:11px;color:var(--text3)">${p}%</span></div></td></tr>`}).join('')}
+  </tbody></table>`;
+}
+
+// ADMIN
+async function renderAdmin(){
+  if(U?.role!=='admin'){toast('Admin only','error');navTo('dashboard',null);return;}
+  document.getElementById('content').innerHTML=`
+  <div class="stats-grid" style="margin-bottom:14px">
+    <div class="stat-card s1"><div class="stat-ico">👥</div><div class="stat-val" id="au">...</div><div class="stat-lbl">Users</div></div>
+    <div class="stat-card s2"><div class="stat-ico">🔗</div><div class="stat-val" id="al">...</div><div class="stat-lbl">Links</div></div>
+    <div class="stat-card s3"><div class="stat-ico">👆</div><div class="stat-val" id="ac">...</div><div class="stat-lbl">Clicks</div></div>
+    <div class="stat-card s4"><div class="stat-ico">💰</div><div class="stat-val" id="ar">...</div><div class="stat-lbl">Revenue</div></div>
+  </div>
+  <div style="display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="btn btn-primary btn-sm" onclick="admTab('users')">👥 Users</button>
+    <button class="btn btn-secondary btn-sm" onclick="admTab('links')">🔗 Links</button>
+    <button class="btn btn-secondary btn-sm" onclick="admTab('live')">🟢 Live IPs</button>
+    <button class="btn btn-secondary btn-sm" onclick="admTab('ads')">📢 Ads</button>
+    <button class="btn btn-secondary btn-sm" onclick="admTab('sys')">⚙️ System</button>
+  </div>
+  <div id="adm-tc"></div>`;
+  const s=await api('/api/admin/stats');
+  sv('au',s.totalUsers||0);sv('al',s.totalLinks||0);sv('ac',s.totalClicks||0);sv('ar','$'+(s.totalRevenue||0).toFixed(2));
+  admTab('users');
+}
+async function admTab(tab){
+  const tc=document.getElementById('adm-tc');if(!tc)return;
+
+  if(tab==='users'){
+    tc.innerHTML=`<div class="card"><input class="inp" id="aus" placeholder="Search users..." style="max-width:260px;margin-bottom:12px" oninput="admU(this.value)"><div class="tw" id="aut"></div></div>`;
+    await admU();
+  }
+
+  if(tab==='links'){
+    const d=await api('/api/admin/links');
+    tc.innerHTML=`<div class="card"><div class="tw">${admLT(d.links||[])}</div></div>`;
+  }
+
+  if(tab==='live'){
+    tc.innerHTML=`
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:14px;font-weight:700">🟢 Live Visitor IPs</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Real-time — last 100 clicks with full location</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="admTab('live')">🔄 Refresh</button>
+      </div>
+      <div id="live-t"><div style="text-align:center;padding:28px;color:var(--text3)">Loading...</div></div>
+    </div>`;
+    const d=await api('/api/admin/clicks/live');
+    const t=document.getElementById('live-t');if(!t)return;
+    if(!d.clicks?.length){t.innerHTML='<p style="text-align:center;padding:28px;color:var(--text3);font-size:13px">No clicks yet. Share a link first!</p>';return;}
+    t.innerHTML=`<div class="tw"><table>
+      <thead><tr><th>Time</th><th>IP Address</th><th>📍 Location</th><th>Device / OS</th><th>Browser</th><th>Link</th><th>Status</th></tr></thead>
+      <tbody>
+      ${d.clicks.map(c=>{
+        const loc=[];
+        if(c.city)loc.push(c.city);
+        if(c.region)loc.push(c.region);
+        if(c.country)loc.push(c.country);
+        const locStr=loc.join(', ')||'Unknown';
+        const mapUrl=(c.ll&&c.ll.length===2)?`https://www.google.com/maps?q=${c.ll[0]},${c.ll[1]}`:'';
+        const timeStr=new Date(c.createdAt).toLocaleString('en-BD',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'short'});
+        return`<tr>
+          <td style="font-size:11px;white-space:nowrap;color:var(--text3)">${timeStr}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="background:var(--bg3);padding:2px 8px;border-radius:5px;font-size:11.5px;letter-spacing:.3px">${c.ip?.replace('::ffff:','')||'—'}</code>
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="cpClip('${c.ip?.replace('::ffff:','')||''}')" title="Copy IP" style="padding:3px 6px;font-size:10px">📋</button>
+            </div>
+          </td>
+          <td>
+            <div style="font-size:12.5px;font-weight:600">${locStr}</div>
+            ${c.timezone?`<div style="font-size:10.5px;color:var(--text3)">${c.timezone}</div>`:''}
+            ${mapUrl?`<a href="${mapUrl}" target="_blank" style="font-size:10.5px;color:var(--cyan);text-decoration:none">🗺 View on Map</a>`:''}
+          </td>
+          <td>
+            <div style="font-size:12.5px">${c.device||'desktop'}</div>
+            <div style="font-size:10.5px;color:var(--text3)">${c.os||'—'}</div>
+          </td>
+          <td style="font-size:12px">${c.browser||'—'}</td>
+          <td>
+            ${c.linkId?.shortCode?`<a href="${location.origin}/${c.linkId.shortCode}" target="_blank" style="color:var(--p);font-size:12px;font-weight:600">/${c.linkId.shortCode}</a>`:'—'}
+          </td>
+          <td><span class="badge ${c.completed?'bg-green':'bg-yellow'}">${c.completed?'✓ Done':'⏳'}</span></td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--text3);text-align:center">
+      Showing ${d.clicks.length} recent clicks · Auto-refresh: <button class="btn btn-secondary btn-sm" id="auto-ref-btn" onclick="toggleAutoRefresh()" style="font-size:11px;padding:3px 8px">Start</button>
+    </div>`;
+  }
+
+  if(tab==='ads'){
+    const s=await api('/api/admin/settings');
+    const a=s.adSettings||{};
+    const adList=a.adList||[];
+    tc.innerHTML=`
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px">⚙️ Global Ad Settings</div>
+      <div class="sr"><div><div class="sr-lbl">Enable Monetization</div><div class="sr-desc">Show ads on redirect</div></div><div class="tgl ${a.enabled!==false?'on':''}" id="ae" onclick="this.classList.toggle('on')"></div></div>
+      <div class="sr"><div><div class="sr-lbl">Layers: <span id="lv">${a.layers||5}</span></div><div class="sr-desc">Steps before final link (2–5)</div></div><input type="range" min="2" max="5" value="${a.layers||5}" style="width:90px" oninput="document.getElementById('lv').textContent=this.value" id="alr"></div>
+      <div class="sr"><div><div class="sr-lbl">Timer: <span id="tv">${a.timerSeconds||10}</span>s</div><div class="sr-desc">Layer 1 countdown</div></div><input type="range" min="5" max="30" value="${a.timerSeconds||10}" style="width:90px" oninput="document.getElementById('tv').textContent=this.value" id="atr"></div>
+      <div class="ig" style="margin-top:14px"><label class="il">Monetag Smartlink URL</label><input class="inp" id="mtu" placeholder="https://..." value="${a.monetagUrl||''}"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700">📢 Ad Slots <span style="font-size:11px;color:var(--text3)">(multiple ads support)</span></div>
+        <button class="btn btn-primary btn-sm" onclick="addAdSlot()">+ Add Ad</button>
+      </div>
+      <div id="ad-slots-wrap">
+        ${adList.length===0?`<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px">No ads yet. Click "+ Add Ad" to add.</p>`:''}
+        ${adList.map((ad,i)=>adSlotHTML(ad,i)).join('')}
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveAds()">💾 Save All Ads</button>
+      </div>
+    </div>`;
+  }
+
+  if(tab==='sys'){
+    const s=await api('/api/admin/settings');
+    tc.innerHTML=`<div class="card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px">System Settings</div>
+      <div class="sr"><div><div class="sr-lbl">Maintenance Mode</div><div class="sr-desc">Block regular users</div></div><div class="tgl ${s.maintenance?'on':''}" id="mt" onclick="this.classList.toggle('on')"></div></div>
+      <div class="sr"><div><div class="sr-lbl">Registration</div><div class="sr-desc">Allow new sign ups</div></div><div class="tgl ${s.allowRegister!==false?'on':''}" id="rg" onclick="this.classList.toggle('on')"></div></div>
+      <div class="ig" style="margin-top:14px"><label class="il">CPM Rate (USD/1000 clicks)</label><input class="inp" id="cpm" type="number" step="0.1" value="${s.cpmRate||2}" style="max-width:140px"></div>
+      <div class="ig"><label class="il">Site Name</label><input class="inp" id="sn" value="${s.siteName||'LinkVault'}" style="max-width:220px"></div>
+      <button class="btn btn-primary" onclick="saveSys()">💾 Save</button>
+    </div>`;
+  }
+}
+
+function adSlotHTML(ad,i){
+  const types=['popunder','banner','native','direct_link','push'];
+  return`<div class="card" style="margin-bottom:10px;position:relative" id="adslot-${i}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="badge bg-blue">Ad #${i+1}</span>
+      <select class="inp" id="ad-type-${i}" style="width:auto;padding:5px 10px;flex:1">
+        ${types.map(t=>`<option value="${t}" ${ad.type===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <div class="tgl ${ad.enabled!==false?'on':''}" id="ad-en-${i}" onclick="this.classList.toggle('on')" title="Enable/Disable"></div>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="removeAdSlot(${i})" title="Remove">🗑</button>
+    </div>
+    <div class="ig" style="margin-bottom:8px"><label class="il">Ad Label (optional)</label><input class="inp" id="ad-label-${i}" placeholder="e.g. Adsterra Banner 1" value="${ad.label||''}"></div>
+    <div class="ig" style="margin-bottom:0"><label class="il">Ad Code / URL</label><textarea class="inp" id="ad-code-${i}" rows="3" placeholder="Paste script tag, HTML, or URL here...">${ad.code||''}</textarea></div>
+  </div>`;
+}
+
+let _adCount=0;
+function addAdSlot(){
+  const wrap=document.getElementById('ad-slots-wrap');if(!wrap)return;
+  // Remove empty state msg
+  wrap.querySelectorAll('p').forEach(p=>p.remove());
+  _adCount=wrap.querySelectorAll('[id^=adslot-]').length;
+  const div=document.createElement('div');
+  div.innerHTML=adSlotHTML({type:'banner',enabled:true,label:'',code:''},_adCount);
+  wrap.appendChild(div.firstElementChild);
+}
+
+function removeAdSlot(i){
+  const el=document.getElementById(`adslot-${i}`);
+  if(el)el.remove();
+  const wrap=document.getElementById('ad-slots-wrap');
+  if(wrap&&!wrap.querySelectorAll('[id^=adslot-]').length){
+    wrap.innerHTML='<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px">No ads. Click "+ Add Ad".</p>';
+  }
+}
+
+async function saveAds(){
+  // Collect all ad slots
+  const slots=document.querySelectorAll('[id^=adslot-]');
+  const adList=[];
+  slots.forEach((slot,i)=>{
+    const idx=slot.id.replace('adslot-','');
+    adList.push({
+      type:document.getElementById(`ad-type-${idx}`)?.value||'banner',
+      label:document.getElementById(`ad-label-${idx}`)?.value||'',
+      code:document.getElementById(`ad-code-${idx}`)?.value||'',
+      enabled:document.getElementById(`ad-en-${idx}`)?.classList.contains('on')!==false
+    });
+  });
+  const r=await api('/api/admin/settings','PUT',{adSettings:{
+    enabled:document.getElementById('ae')?.classList.contains('on'),
+    layers:+(document.getElementById('alr')?.value||5),
+    timerSeconds:+(document.getElementById('atr')?.value||10),
+    monetagUrl:document.getElementById('mtu')?.value||'',
+    adList
+  }});
+  if(r.success)toast('Ads saved! ✅','success');
+}
+
+async function admU(q=''){
+  const d=await api(`/api/admin/users?search=${q}`);const t=document.getElementById('aut');if(!t)return;
+  t.innerHTML=`<table><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+  ${(d.users||[]).map(u=>`<tr><td><strong>${u.username}</strong></td><td style="font-size:11px">${u.email}</td><td><span class="badge ${u.role==='admin'?'bg-yellow':'bg-blue'}">${u.role}</span></td><td><span class="badge ${u.isActive?'bg-green':'bg-red'}">${u.isActive?'Active':'Banned'}</span></td><td style="white-space:nowrap"><button class="btn btn-danger btn-sm" onclick="banU('${u._id}',${!u.isActive})">${u.isActive?'Ban':'Unban'}</button> <button class="btn btn-danger btn-sm" onclick="delU('${u._id}')">Del</button></td></tr>`).join('')}
+  </tbody></table>`;
+}
+function admLT(links){return`<table><thead><tr><th>Code</th><th>User</th><th>Clicks</th><th>Action</th></tr></thead><tbody>${links.map(l=>`<tr><td><a href="${location.origin}/${l.shortCode}" target="_blank" style="color:var(--p)">${l.shortCode}</a></td><td>${l.userId?.username||'?'}</td><td>${l.clicks}</td><td><button class="btn btn-danger btn-sm" onclick="admDL('${l._id}')">Del</button></td></tr>`).join('')}</tbody></table>`;}
+async function banU(id,unban){await api(`/api/admin/users/${id}`,'PATCH',{isActive:unban});toast(unban?'Unbanned':'Banned','info');await admU();}
+async function delU(id){if(!confirm('Delete user?'))return;await api(`/api/admin/users/${id}`,'DELETE');toast('Deleted','info');await admU();}
+async function admDL(id){if(!confirm('Delete?'))return;await api(`/api/admin/links/${id}`,'DELETE');toast('Deleted','info');admTab('links');}
+async function saveSys(){const r=await api('/api/admin/settings','PUT',{maintenance:document.getElementById('mt').classList.contains('on'),allowRegister:document.getElementById('rg').classList.contains('on'),cpmRate:+document.getElementById('cpm').value,siteName:document.getElementById('sn').value});if(r.success)toast('Saved ✅','success');}
+
+// SETTINGS
+function renderSettings(){
+  document.getElementById('content').innerHTML=`
+  <div style="max-width:520px">
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px">Profile</div>
+      <div class="ig"><label class="il">Username</label><input class="inp" value="${U?.username||''}"></div>
+      <div class="ig"><label class="il">Email</label><input class="inp" value="${U?.email||''}" disabled></div>
+      <button class="btn btn-primary">Save</button>
+    </div>
+  </div>`;
+}
+
+// API PAGE
+function renderAPI(){
+  document.getElementById('content').innerHTML=`
+  <div style="max-width:580px">
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px">🔑 API Key</div>
+      <div style="display:flex;gap:8px">
+        <input class="inp" value="${U?.apiKey||'—'}" readonly id="aki" style="font-family:monospace;font-size:11.5px">
+        <button class="btn btn-secondary btn-sm" onclick="cpClip(document.getElementById('aki').value)">Copy</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">Endpoints</div>
+      <div style="font-family:monospace;font-size:12px;line-height:2.2;color:var(--text2)">
+        <div><span class="badge bg-green" style="margin-right:8px">GET</span>/api/links</div>
+        <div><span class="badge bg-blue" style="margin-right:8px">POST</span>/api/links</div>
+        <div><span class="badge bg-red" style="margin-right:8px">DEL</span>/api/links/:id</div>
+        <div><span class="badge bg-green" style="margin-right:8px">GET</span>/api/links/:id/analytics</div>
+        <div><span class="badge bg-blue" style="margin-right:8px">POST</span>/api/files/upload</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// CHARTS
+function mkLine(id,labels,data){
+  const c=document.getElementById(id);if(!c)return;if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(c,{type:'line',data:{labels,datasets:[{data,borderColor:'#6c63ff',backgroundColor:'rgba(108,99,255,0.1)',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#6c63ff',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#7b8ab8',maxTicksLimit:7,font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#7b8ab8',font:{size:10}}}}}});
+}
+function mkPie(id,labels,data){
+  const c=document.getElementById(id);if(!c)return;if(charts[id])charts[id].destroy();
+  const cols=['#6c63ff','#a855f7','#22d3ee','#34d399','#fbbf24','#f87171'];
+  charts[id]=new Chart(c,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:cols.slice(0,data.length),borderWidth:0,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7b8ab8',padding:9,font:{size:11}}}}}});
+}
+
+// QUICK SHORTEN
+async function quickShorten(){
+  const url=document.getElementById('hero-url').value;if(!url){toast('Enter a URL','error');return;}
+  if(!U){showAuth('register');toast('Sign up to shorten links!','info');return;}
+  const d=await api('/api/links','POST',{originalUrl:url});
+  if(d.error){toast(d.error,'error');return;}
+  const rc=document.getElementById('res-card');
+  document.getElementById('res-url').textContent=d.shortUrl;rc.style.display='block';rc.dataset.url=d.shortUrl;
+  toast('Shortened! 🎉','success');
+}
+function copyResUrl(){cpClip(document.getElementById('res-card').dataset.url);const btn=document.getElementById('copy-btn');btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent='📋 Copy',2000);}
+
+// QR
+function showQRFor(url){document.getElementById('qr-wrap').innerHTML='';document.getElementById('qr-txt').textContent=url;openModal('qr-modal');new QRCode(document.getElementById('qr-wrap'),{text:url,width:170,height:170});}
+function dlQR(){const c=document.querySelector('#qr-wrap canvas');if(!c)return;const a=document.createElement('a');a.download='qr.png';a.href=c.toDataURL();a.click();}
+
+// MODALS
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.addEventListener('click',e=>{if(e.target.classList.contains('moverlay'))closeModal(e.target.id);});
+
+// UTILS
+async function api(url,method='GET',body=null){
+  const o={method,headers:{'Content-Type':'application/json'},credentials:'include'};
+  if(body)o.body=JSON.stringify(body);
+  try{const r=await fetch(url,o);return await r.json();}catch(e){return{error:e.message};}
+}
+function toast(msg,type='info'){
+  const t=document.getElementById('toasts');const el=document.createElement('div');
+  el.className=`toast t-${type}`;el.textContent=msg;t.appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+function cpClip(text){
+  navigator.clipboard.writeText(text).then(()=>toast('Copied! 📋','success')).catch(()=>{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();toast('Copied!','success');});
+}
+
+// AUTO REFRESH
+let _arTimer=null;
+function toggleAutoRefresh(){
+  const btn=document.getElementById('auto-ref-btn');
+  if(_arTimer){clearInterval(_arTimer);_arTimer=null;if(btn)btn.textContent='Start';toast('Auto-refresh off','info');}
+  else{_arTimer=setInterval(()=>admTab('live'),10000);if(btn)btn.textContent='Stop (10s)';toast('Auto-refresh on — every 10s','success');}
+}
+
+init();
+</script>
+</body>
+</html>

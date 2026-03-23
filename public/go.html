@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Please Wait — LinkVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#080b14;color:#f0f4ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px;gap:14px}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(108,99,255,.2) 0%,transparent 60%);pointer-events:none}
+.card{width:100%;max-width:520px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:26px 22px;backdrop-filter:blur(20px);text-align:center;position:relative;z-index:1}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin-bottom:18px}
+.logo span{background:linear-gradient(135deg,#6c63ff,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.step-dots{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
+.dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .3s}
+.dot.done{background:#6c63ff}
+.dot.active{background:#6c63ff;box-shadow:0 0 10px rgba(108,99,255,.6);transform:scale(1.3)}
+.circle-timer{width:100px;height:100px;position:relative;margin:0 auto 18px}
+.circle-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:6}
+.circle-fill{fill:none;stroke:url(#g);stroke-width:6;stroke-linecap:round;transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset .9s linear}
+.cnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:28px;color:#6c63ff}
+.step-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:6px}
+.step-sub{color:#8892a4;font-size:13px;line-height:1.6;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .2s;width:100%}
+.btn-primary{background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;box-shadow:0 4px 16px rgba(108,99,255,.35)}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-glow{background:linear-gradient(135deg,#6c63ff,#a855f7);color:#fff;animation:glow 2s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 18px rgba(108,99,255,.4)}50%{box-shadow:0 0 36px rgba(108,99,255,.7),0 0 72px rgba(168,85,247,.4)}}
+.ad-box{width:100%;margin:10px 0;overflow:hidden;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.ad-box iframe,.ad-box ins,.ad-box>*{max-width:100%!important}
+.ad-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#3d4f7c;margin-bottom:3px;text-align:center}
+.spinner{width:42px;height:42px;border:3px solid rgba(255,255,255,.1);border-top-color:#6c63ff;border-radius:50%;margin:16px auto;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sec{font-size:11px;color:#3d4f7c;margin-top:16px}
+/* side ads */
+.side-ads{position:fixed;right:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:10}
+@media(max-width:900px){.side-ads{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ══ POPUNDER — fires immediately on page load ══ -->
+<script src="https://pl28963707.profitablecpmratenetwork.com/24/95/33/249533d35c1fd4fee6f4b4dc635d1b2d.js"></script>
+
+<!-- ══ SOCIAL BAR — top of page ══ -->
+<script src="https://pl28963737.profitablecpmratenetwork.com/0e/56/57/0e56577693cb13288befeb03e4738712.js"></script>
+
+<!-- ══ SIDE ADS: 160x600 (desktop only) ══ -->
+<div class="side-ads">
+  <div class="ad-lbl">Ad</div>
+  <script>atOptions={'key':'7b06dbf11a0cb784af89fc6b9a055fe3','format':'iframe','height':600,'width':160,'params':{}};</script>
+  <script src="https://www.highperformanceformat.com/7b06dbf11a0cb784af89fc6b9a055fe3/invoke.js"></script>
+</div>
+
+<!-- ══ MAIN CARD ══ -->
+<div class="card" id="main-card">
+  <div class="logo">Link<span>Vault</span></div>
+  <div class="step-dots" id="step-dots"></div>
+  <div id="step-content"></div>
+  <div class="sec">🔒 Secure redirect · LinkVault</div>
+</div>
+
+<!-- ══ BANNER 728x90 — below card ══ -->
+<div style="width:100%;max-width:740px;overflow:hidden;border-radius:8px;z-index:1">
+  <div class="ad-lbl">Advertisement</div>
+  <div class="ad-box">
+    <script>atOptions={'key':'f535bde21a2b95a6c0a54b4e5af8ade7','format':'iframe','height':90,'width':728,'params':{}};</script>
+    <script src="https://www.highperformanceformat.com/f535bde21a2b95a6c0a54b4e5af8ade7/invoke.js"></script>
+  </div>
+</div>
+
+<!-- ══ BANNER 320x50 — mobile friendly ══ -->
+<div style="width:100%;max-width:340px;overflow:hidden;border-radius:8px;z-index:1">
+  <div class="ad-lbl">Advertisement</div>
+  <div class="ad-box">
+    <script>atOptions={'key':'a563feba712afb673efbb5364d8ba1b0','format':'iframe','height':50,'width':320,'params':{}};</script>
+    <script src="https://www.highperformanceformat.com/a563feba712afb673efbb5364d8ba1b0/invoke.js"></script>
+  </div>
+</div>
+
+<!-- ══ NATIVE BANNER ══ -->
+<div style="width:100%;max-width:520px;overflow:hidden;border-radius:8px;z-index:1">
+  <div class="ad-lbl">Sponsored</div>
+  <script async="async" data-cfasync="false" src="https://pl28963741.profitablecpmratenetwork.com/bb798bd5c8c691de6c57b89843dbbe89/invoke.js"></script>
+  <div id="container-bb798bd5c8c691de6c57b89843dbbe89"></div>
+</div>
+
+<!-- ══ BANNER 300x250 ══ -->
+<div style="width:100%;max-width:320px;overflow:hidden;border-radius:8px;z-index:1">
+  <div class="ad-lbl">Advertisement</div>
+  <div class="ad-box">
+    <script>atOptions={'key':'a91624f2b24e7043ba8569debbe0270d','format':'iframe','height':250,'width':300,'params':{}};</script>
+    <script src="https://www.highperformanceformat.com/a91624f2b24e7043ba8569debbe0270d/invoke.js"></script>
+  </div>
+</div>
+
+<!-- ══ BANNER 468x60 ══ -->
+<div style="width:100%;max-width:490px;overflow:hidden;border-radius:8px;z-index:1">
+  <div class="ad-lbl">Advertisement</div>
+  <div class="ad-box">
+    <script>atOptions={'key':'c07219fe32e1a9f23c738d291c203b2f','format':'iframe','height':60,'width':468,'params':{}};</script>
+    <script src="https://www.highperformanceformat.com/c07219fe32e1a9f23c738d291c203b2f/invoke.js"></script>
+  </div>
+</div>
+
+<!-- ══ BANNER 160x300 ══ -->
+<div style="width:100%;max-width:180px;overflow:hidden;border-radius:8px;z-index:1">
+  <div class="ad-lbl">Advertisement</div>
+  <div class="ad-box">
+    <script>atOptions={'key':'7b06dbf11a0cb784af89fc6b9a055fe3','format':'iframe','height':300,'width':160,'params':{}};</script>
+    <script src="https://www.highperformanceformat.com/7b06dbf11a0cb784af89fc6b9a055fe3/invoke.js"></script>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+let token = params.get('token');
+let currentStep = parseInt(params.get('step')) || 1;
+let totalSteps = 5;
+let timerSeconds = 10;
+
+async function init() {
+  try {
+    const r = await fetch('/api/settings/public');
+    const d = await r.json();
+    const a = d.adSettings || {};
+    totalSteps = a.layers || 5;
+    timerSeconds = a.timerSeconds || 10;
+  } catch(e) {}
+  renderDots();
+  renderStep(currentStep);
+}
+
+function renderDots() {
+  let h = '';
+  for (let i = 1; i <= totalSteps; i++)
+    h += `<div class="dot ${i<currentStep?'done':i===currentStep?'active':''}"></div>`;
+  document.getElementById('step-dots').innerHTML = h;
+}
+
+function renderStep(s) {
+  if (s === 1) step1();
+  else if (s === 2) step2();
+  else if (s === 3) step3();
+  else if (s === 4) step4();
+  else if (s >= totalSteps) stepFinal();
+  else stepGeneric(s);
+}
+
+// ── STEP 1: Countdown ──
+function step1() {
+  const r = 46, circ = 2 * Math.PI * r;
+  document.getElementById('step-content').innerHTML = `
+    <div class="step-title">Please wait</div>
+    <div class="step-sub">Your link is being prepared securely</div>
+    <svg class="circle-timer" viewBox="0 0 110 110">
+      <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#6c63ff"/><stop offset="100%" stop-color="#a855f7"/>
+      </linearGradient></defs>
+      <circle class="circle-bg" cx="55" cy="55" r="${r}"/>
+      <circle class="circle-fill" id="cf" cx="55" cy="55" r="${r}" stroke-dasharray="${circ}" stroke-dashoffset="0"/>
+      <text x="55" y="62" text-anchor="middle" fill="#6c63ff" font-family="Syne" font-weight="800" font-size="28" id="ct">${timerSeconds}</text>
+    </svg>
+    <button class="btn btn-primary" id="cbtn" disabled onclick="advance()">Continue →</button>`;
+  let rem = timerSeconds;
+  const iv = setInterval(() => {
+    rem--;
+    const cf=document.getElementById('cf'),ct=document.getElementById('ct'),cb=document.getElementById('cbtn');
+    if(cf) cf.style.strokeDashoffset = circ - circ*(rem/timerSeconds);
+    if(ct) ct.textContent = rem;
+    if(rem<=0){clearInterval(iv);if(cb){cb.disabled=false;cb.textContent='Continue →';}}
+  }, 1000);
+}
+
+// ── STEP 2: Smartlink trigger ──
+function step2() {
+  document.getElementById('step-content').innerHTML = `
+    <div class="step-title">Almost there!</div>
+    <div class="step-sub">Tap continue to proceed</div>
+    <button class="btn btn-primary" onclick="step2go()">Continue →</button>`;
+}
+function step2go() {
+  window.open('https://www.profitablecpmratenetwork.com/bktp7t9d99?key=1d7db7242ba85a8b7605452a8d6fb5e0','_blank');
+  setTimeout(() => advance(), 700);
+}
+
+// ── STEP 3 ──
+function step3() {
+  document.getElementById('step-content').innerHTML = `
+    <div class="step-title">One more step</div>
+    <div class="step-sub">Almost done!</div>
+    <button class="btn btn-primary" onclick="advance()" style="margin-top:8px">Continue →</button>`;
+}
+
+// ── STEP 4: Loading ──
+function step4() {
+  document.getElementById('step-content').innerHTML = `
+    <div class="step-title">Loading your link</div>
+    <div class="spinner"></div>
+    <div style="color:#8892a4;font-size:13px">Preparing destination...</div>`;
+  setTimeout(() => advance(), 2500);
+}
+
+// ── FINAL STEP ──
+function stepFinal() {
+  document.getElementById('step-content').innerHTML = `
+    <div style="font-size:36px;margin-bottom:10px">✨</div>
+    <div class="step-title">Your link is ready!</div>
+    <div class="step-sub">Click below to continue</div>
+    <button class="btn btn-glow" onclick="getFinal()">🔓 Get My Link</button>`;
+}
+
+function stepGeneric(s) {
+  document.getElementById('step-content').innerHTML = `<div class="step-title">Step ${s}</div><div class="spinner"></div>`;
+  setTimeout(() => advance(), 1500);
+}
+
+async function advance() {
+  try {
+    const r = await fetch('/api/links/step', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token, step:currentStep})
+    });
+    const d = await r.json();
+    if(d.error){
+      document.getElementById('step-content').innerHTML=`<p style="color:#f87171;font-size:13px;margin-top:8px">Link expired. Please go back and try again.</p>`;
+      return;
+    }
+    if(d.destination){window.location.href=d.destination;return;}
+    token=d.newToken;currentStep=d.nextStep;
+    renderDots();renderStep(currentStep);
+  } catch(e){console.error(e);}
+}
+
+async function getFinal(){
+  const b=document.querySelector('.btn-glow');if(b)b.textContent='Loading...';
+  await advance();
+}
+
+init();
+</script>
+</body>
+</html>
